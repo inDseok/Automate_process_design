@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title if title else "공정설계 TOOL" }}</title>
+    <link rel="stylesheet" href="/static/css/style.css?v=1">
+</head>
+<body>
+<div class="layout">
+    {% include 'sidebar.html' %}
+    <main class="main">
+        {% include 'header.html' %}
+        <section class="main-body">
+            {% block content %}{% endblock %}
+        </section>
+    </main>
+</div>
+
+</body>
+</html>

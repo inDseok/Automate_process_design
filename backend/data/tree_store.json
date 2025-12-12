@@ -1,0 +1,207 @@
+{
+  "외주SUB(위트)": {
+    "sub_name": "외주SUB(위트)",
+    "nodes": [
+      {
+        "id": "1. SUB 단위 부품구성도(STD):8:9",
+        "parent_id": null,
+        "order": 0,
+        "type": "PART",
+        "name": "H/L ASS'Y",
+        "vehicle": null,
+        "material": "재질",
+        "qty": null
+      },
+      {
+        "id": "1. SUB 단위 부품구성도(STD):8:29",
+        "parent_id": "1. SUB 단위 부품구성도(STD):8:9",
+        "order": 1,
+        "type": "PART",
+        "name": "LENS+BEZEL SUB",
+        "vehicle": null,
+        "material": "재질",
+        "qty": 0.0
+      },
+      {
+        "id": "1. SUB 단위 부품구성도(STD):8:46",
+        "parent_id": "1. SUB 단위 부품구성도(STD):8:29",
+        "order": 2,
+        "type": "PART",
+        "name": "T/SIG INR LENS",
+        "vehicle": null,
+        "material": "재질",
+        "qty": 4.0
+      },
+      {
+        "id": "1. SUB 단위 부품구성도(STD):15:46",
+        "parent_id": "1. SUB 단위 부품구성도(STD):8:29",
+        "order": 3,
+        "type": "PART",
+        "name": "PSTNREFLECTOR",
+        "vehicle": null,
+        "material": "재질",
+        "qty": 2.0
+      },
+      {
+        "id": "1. SUB 단위 부품구성도(STD):22:46",
+        "parent_id": "1. SUB 단위 부품구성도(STD):8:29",
+        "order": 4,
+        "type": "PART",
+        "name": "MAIN BEZEL",
+        "vehicle": null,
+        "material": "재질",
+        "qty": 5.0
+      },
+      {
+        "id": "1. SUB 단위 부품구성도(STD):29:46",
+        "parent_id": "1. SUB 단위 부품구성도(STD):8:29",
+        "order": 5,
+        "type": "PART",
+        "name": "LENS",
+        "vehicle": null,
+        "material": "재질",
+        "qty": null
+      },
+      {
+        "id": "1. SUB 단위 부품구성도(STD):41:29",
+        "parent_id": "1. SUB 단위 부품구성도(STD):8:9",
+        "order": 6,
+        "type": "PART",
+        "name": "HOUSING SUB",
+        "vehicle": null,
+        "material": "재질",
+        "qty": null
+      },
+      {
+        "id": "1. SUB 단위 부품구성도(STD):41:46",
+        "parent_id": "1. SUB 단위 부품구성도(STD):41:29",
+        "order": 7,
+        "type": "PART",
+        "name": "HOUSING ASS'Y",
+        "vehicle": null,
+        "material": "재질",
+        "qty": null
+      },
+      {
+        "id": "1. SUB 단위 부품구성도(STD):41:60",
+        "parent_id": "1. SUB 단위 부품구성도(STD):41:46",
+        "order": 8,
+        "type": "PART",
+        "name": "HOUSING",
+        "vehicle": null,
+        "material": "재질",
+        "qty": null
+      },
+      {
+        "id": "1. SUB 단위 부품구성도(STD):41:74",
+        "parent_id": "1. SUB 단위 부품구성도(STD):41:60",
+        "order": 9,
+        "type": "PART",
+        "name": "PIVOT",
+        "vehicle": null,
+        "material": "재질",
+        "qty": null
+      },
+      {
+        "id": "1. SUB 단위 부품구성도(STD):41:88",
+        "parent_id": "1. SUB 단위 부품구성도(STD):41:74",
+        "order": 10,
+        "type": "PART",
+        "name": "WIRING",
+        "vehicle": null,
+        "material": "재질",
+        "qty": null
+      },
+      {
+        "id": "1. SUB 단위 부품구성도(STD):41:102",
+        "parent_id": "1. SUB 단위 부품구성도(STD):41:88",
+        "order": 11,
+        "type": "PART",
+        "name": "AIMING BOLT\n& 푸쉬 너트",
+        "vehicle": null,
+        "material": "재질",
+        "qty": null
+      },
+      {
+        "id": "1. SUB 단위 부품구성도(STD):48:46",
+        "parent_id": "1. SUB 단위 부품구성도(STD):41:29",
+        "order": 12,
+        "type": "PART",
+        "name": "LOW REF.",
+        "vehicle": null,
+        "material": "재질",
+        "qty": null
+      },
+      {
+        "id": "1. SUB 단위 부품구성도(STD):55:46",
+        "parent_id": "1. SUB 단위 부품구성도(STD):41:29",
+        "order": 13,
+        "type": "PART",
+        "name": "에이밍 리테이너",
+        "vehicle": null,
+        "material": "재질",
+        "qty": null
+      },
+      {
+        "id": "1. SUB 단위 부품구성도(STD):62:46",
+        "parent_id": "1. SUB 단위 부품구성도(STD):41:29",
+        "order": 14,
+        "type": "PART",
+        "name": "피봇 리테이너",
+        "vehicle": null,
+        "material": "재질",
+        "qty": null
+      },
+      {
+        "id": "1. SUB 단위 부품구성도(STD):69:46",
+        "parent_id": "1. SUB 단위 부품구성도(STD):41:29",
+        "order": 15,
+        "type": "PART",
+        "name": "LEVELING DEVICE",
+        "vehicle": null,
+        "material": "재질",
+        "qty": null
+      },
+      {
+        "id": "1. SUB 단위 부품구성도(STD):76:46",
+        "parent_id": "1. SUB 단위 부품구성도(STD):41:29",
+        "order": 16,
+        "type": "PART",
+        "name": "SHIELD",
+        "vehicle": null,
+        "material": "재질",
+        "qty": null
+      },
+      {
+        "id": "1. SUB 단위 부품구성도(STD):83:46",
+        "parent_id": "1. SUB 단위 부품구성도(STD):41:29",
+        "order": 17,
+        "type": "PART",
+        "name": "T/SIG\nREFLECTOR",
+        "vehicle": null,
+        "material": "재질",
+        "qty": null
+      },
+      {
+        "id": "1. SUB 단위 부품구성도(STD):90:46",
+        "parent_id": "1. SUB 단위 부품구성도(STD):41:29",
+        "order": 18,
+        "type": "PART",
+        "name": "로우 더스트 커버",
+        "vehicle": null,
+        "material": "재질",
+        "qty": null
+      },
+      {
+        "id": "1. SUB 단위 부품구성도(STD):97:46",
+        "parent_id": "1. SUB 단위 부품구성도(STD):41:29",
+        "order": 19,
+        "type": "PART",
+        "name": "턴시그널,PSTN\nLOW 벌브",
+        "vehicle": null,
+        "material": "재질",
+        "qty": null
+      }
+    ]
+  }
+}

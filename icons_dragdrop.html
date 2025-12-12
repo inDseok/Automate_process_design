@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>아이콘 드래그앤드롭 + 동적 사이드바</title>
+  <style>
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: sans-serif;
+    }
+
+    .layout {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* 사이드바 */
+    .sidebar {
+      width: 230px;
+      background: #f0f2f6;
+      border-right: 1px solid #d0d4dd;
+      padding: 16px 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .sidebar-title {
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    #sidebar-menu {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .sidebar-item {
+      padding: 8px 10px;
+      border-radius: 8px;
+      margin-bottom: 4px;
+      font-size: 14px;
+      cursor: pointer;
+      border: 1px solid transparent;
+    }
+
+    .sidebar-item:hover {
+      background: #e3e7f2;
+    }
+
+    .sidebar-item.active {
+      background: #ffffff;
+      border-color: #4a90e2;
+      font-weight: 600;
+    }
+
+    .sidebar-help {
+      font-size: 12px;
+      padding: 8px;
+      border-radius: 8px;
+      background: #ffffff;
+      border: 1px solid #e0e4ee;
+      color: #555;
+    }
+
+    /* 메인 영역 */
+    .main {
+      flex: 1;
+      padding: 20px 24px;
+      overflow: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .view {
+      display: none;
+    }
+    .view.active {
+      display: block;
+    }
+
+    .container-wrapper {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .container {
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      padding: 10px;
+      width: 260px;
+      min-height: 150px;
+      background: #f9f9f9;
+    }
+
+    .container-title {
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .icon-item {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 60px;
+      height: 60px;
+      margin: 5px;
+      border-radius: 10px;
+      background: #ffffff;
+      border: 1px solid #ddd;
+      cursor: grab;
+      user-select: none;
+      font-size: 26px;
+    }
+
+    .icon-item.dragging {
+      opacity: 0.5;
+      border-style: dashed;
+    }
+
+    .container.over {
+      border-color: #4a90e2;
+      background: #eef4ff;
+    }
+
+    .btn {
+      padding: 7px 12px;
+      border-radius: 6px;
+      border: 1px solid #4a90e2;
+      background: #e6f0ff;
+      cursor: pointer;
+      font-size: 13px;
+    }
+
+    .btn:hover {
+      background: #d4e4ff;
+    }
+
+    table {
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    table th, table td {
+      border: 1px solid #ccc;
+      padding: 6px 8px;
+    }
+    table th {
+      background: #f0f2f6;
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <!-- 왼쪽 사이드바 -->
+    <aside class="sidebar">
+      <div>
+        <div class="sidebar-title">메뉴</div>
+        <ul id="sidebar-menu"></ul>
+      </div>
+
+      <div class="sidebar-help">
+        · 메뉴를 클릭하면 오른쪽 화면이 전환됨<br>
+        · 아이콘 배치 화면에서 공정 아이콘을 드래그해서 이동 가능
+      </div>
+    </aside>
+
+    <!-- 오른쪽 메인 -->
+    <main class="main">
+      <header>
+        <h2 id="main-title" style="margin:0 0 4px 0;">아이콘 배치</h2>
+        <p id="main-desc" style="margin:0;font-size:14px;color:#555;">
+          아이콘을 드래그해서 공정 레이아웃을 편집합니다.
+        </p>
+      </header>
+
+      <!-- 뷰 1: 아이콘 배치 -->
+      <section id="view-layout" class="view active">
+        <div style="margin-bottom:10px;">
+          <label for="sub-select" style="font-size:14px;">SUB 선택: </label>
+          <select id="sub-select" style="padding:4px 8px; font-size:14px;"></select>
+          <button class="btn" id="reload-sub-btn">불러오기</button>
+        </div>
+      
+        <div id="sub-tree-canvas"></div>
+      </section>
+      
+      <!-- 뷰 2: 라인 요약 -->
+      <section id="view-summary" class="view">
+        <p>현재 배치 상태를 간단히 요약해서 보여주는 화면 예시입니다.</p>
+        <table>
+          <thead>
+            <tr>
+              <th>순번</th>
+              <th>공정 아이콘</th>
+              <th>설명</th>
+            </tr>
+          </thead>
+          <tbody id="summary-table-body">
+            <tr><td colspan="3">왼쪽에서 "아이콘 배치"로 아이콘을 배치한 뒤, 이 화면에서 가공해도 됨.</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- 뷰 3: 설정 -->
+      <section id="view-settings" class="view">
+        <p>설정 화면 예시입니다. 여기에는 저장 버튼, 프리셋 선택, JSON 내보내기 등을 넣으면 됩니다.</p>
+        <button class="btn">레이아웃 저장</button>
+        <button class="btn">레이아웃 불러오기</button>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    // -----------------------------
+    // 1. 사이드바 메뉴 동적 생성
+    // -----------------------------
+    const API_BASE = "http://localhost:8010";  // FastAPI 주소
+
+    const menuData = [
+      { id: 'layout',  label: 'SUB 단위 부품 구성도',  title: 'SUB 단위 부품 구성도',  desc: '아이콘을 드래그해서 레이아웃을 편집합니다.' },
+      { id: 'summary', label: '작업시간 분석표',    title: '작업시간 분석표',    desc: '배치된 아이콘을 기반으로 작업시간 분석표를 만듭니다.' },
+      { id: 'settings',label: '설정',        title: '설정',        desc: '레이아웃 저장/불러오기 등 설정을 관리합니다.' }
+    ];
+
+    const sidebarMenu = document.getElementById('sidebar-menu');
+    const mainTitle = document.getElementById('main-title');
+    const mainDesc = document.getElementById('main-desc');
+
+    menuData.forEach((item, idx) => {
+      const li = document.createElement('li');
+      li.textContent = item.label;
+      li.className = 'sidebar-item' + (idx === 0 ? ' active' : '');
+      li.dataset.menuId = item.id;
+      sidebarMenu.appendChild(li);
+    });
+
+    // 사이드바 클릭 이벤트 (이벤트 위임)
+    sidebarMenu.addEventListener('click', (e) => {
+      const target = e.target.closest('.sidebar-item');
+      if (!target) return;
+
+      const menuId = target.dataset.menuId;
+      const meta = menuData.find(m => m.id === menuId);
+      if (!meta) return;
+
+      // 사이드바 active 처리
+      document.querySelectorAll('.sidebar-item').forEach(el => el.classList.remove('active'));
+      target.classList.add('active');
+
+      // 메인 타이틀/설명 변경
+      mainTitle.textContent = meta.title;
+      mainDesc.textContent = meta.desc;
+
+      // 뷰 전환
+      document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+      const viewEl = document.getElementById('view-' + menuId);
+      if (viewEl) viewEl.classList.add('active');
+
+      // 요약 화면 들어올 때마다 테이블 갱신 예시
+      if (menuId === 'summary') {
+        updateSummaryTable();
+      }
+    });
+    
+
+    // -----------------------------
+    // 2. 아이콘 드래그앤드롭
+    // -----------------------------
+    const containers = document.querySelectorAll('.container');
+    let draggedItem = null;
+
+    function initDraggableIcons() {
+      document.querySelectorAll('.icon-item').forEach(item => {
+        item.addEventListener('dragstart', (e) => {
+          draggedItem = item;
+          item.classList.add('dragging');
+          e.dataTransfer.effectAllowed = 'move';
+        });
+
+        item.addEventListener('dragend', () => {
+          draggedItem = null;
+          item.classList.remove('dragging');
+        });
+      });
+    }
+
+    initDraggableIcons(); // 초기 바인딩
+
+    containers.forEach(container => {
+      container.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        container.classList.add('over');
+
+        const afterElement = getDragAfterElement(container, e.clientX, e.clientY);
+        if (!draggedItem) return;
+
+        if (afterElement == null) {
+          container.appendChild(draggedItem);
+        } else {
+          container.insertBefore(draggedItem, afterElement);
+        }
+      });
+
+      container.addEventListener('dragleave', () => {
+        container.classList.remove('over');
+      });
+
+      container.addEventListener('drop', (e) => {
+        e.preventDefault();
+        container.classList.remove('over');
+      });
+    });
+
+    function getDragAfterElement(container, x, y) {
+      const draggableElements = [...container.querySelectorAll('.icon-item:not(.dragging)')];
+
+      return draggableElements.reduce((closest, child) => {
+        const box = child.getBoundingClientRect();
+        const offset = Math.sqrt(
+          Math.pow(x - (box.left + box.width / 2), 2) +
+          Math.pow(y - (box.top + box.height / 2), 2)
+        );
+        if (offset < closest.offset) {
+          return { offset: offset, element: child };
+        } else {
+          return closest;
+        }
+      }, { offset: Number.POSITIVE_INFINITY, element: null }).element;
+    }
+
+    // -----------------------------
+    // 3. 상태 출력 + 요약 갱신
+    // -----------------------------
+    document.getElementById('printStateBtn').addEventListener('click', () => {
+      const box1 = document.querySelector('#box-1');
+      const box2 = document.querySelector('#box-2');
+
+      const box1Ids = [...box1.querySelectorAll('.icon-item')].map(el => el.dataset.id);
+      const box2Ids = [...box2.querySelectorAll('.icon-item')].map(el => el.dataset.id);
+
+      console.log('아이콘 창고:', box1Ids);
+      console.log('배치한 아이콘:', box2Ids);
+      alert('F12 → Console 탭에서 순서를 확인할 수 있습니다.');
+    });
+
+    function updateSummaryTable() {
+      const tbody = document.getElementById('summary-table-body');
+      tbody.innerHTML = '';
+
+      const box2 = document.querySelector('#box-2');
+      const icons = [...box2.querySelectorAll('.icon-item')];
+
+      if (icons.length === 0) {
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.colSpan = 3;
+        td.textContent = '배치한 아이콘이 없습니다. 먼저 "아이콘 배치" 메뉴에서 아이콘을 배치하세요.';
+        tr.appendChild(td);
+        tbody.appendChild(tr);
+        return;
+      }
+
+      icons.forEach((icon, idx) => {
+        const tr = document.createElement('tr');
+        const id = icon.dataset.id;
+        const emoji = icon.textContent.trim();
+
+        const td1 = document.createElement('td');
+        td1.textContent = idx + 1;
+
+        const td2 = document.createElement('td');
+        td2.textContent = `${emoji} (${id})`;
+
+        const td3 = document.createElement('td');
+        td3.textContent = '설명 자리 (예: 공정 이름, Tact Time 등)';
+
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        tr.appendChild(td3);
+        tbody.appendChild(tr);
+      });
+    }
+  </script>
+</body>
+</html>

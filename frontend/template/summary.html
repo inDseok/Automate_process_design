@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div id="summary-page">
+
+    <div class="summary-hint">
+        SUB 트리 데이터를 기반으로 요약 정보를 표시합니다.
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>순번</th>
+            <th>부품명</th>
+            <th>타입</th>
+            <th>양산처</th>
+            <th>수량(EA)</th>
+            <th>상위 ASSY</th>
+        </tr>
+        </thead>
+        <tbody id="summary-table-body">
+            <tr><td colspan="6">SUB 페이지에서 먼저 데이터를 불러오십시오.</td></tr>
+        </tbody>
+    </table>
+
+</div>
+
+<script src="/static/js/summary.js"></script>
+
+{% endblock %}

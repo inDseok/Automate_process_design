@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>H-Lamp 공정설계 SUB 구성도 편집기</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f5f6fa;
+    }
+
+    .layout {
+      display: flex;
+      height: 100vh;
+    }
+
+    /* 사이드바 */
+
+    .sidebar {
+      width: 240px;
+      background: #202737;
+      color: #f5f6fa;
+      padding: 14px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .sidebar-header {
+      font-size: 16px;
+      font-weight: 600;
+      padding: 4px 4px 8px 4px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      margin-bottom: 4px;
+    }
+
+    #sidebar-menu {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .sidebar-item {
+      padding: 8px 10px;
+      margin-bottom: 4px;
+      border-radius: 6px;
+      font-size: 14px;
+      cursor: pointer;
+      color: #d0d4e5;
+    }
+
+    .sidebar-item:hover {
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .sidebar-item.active {
+      background: #f5f6fa;
+      color: #202737;
+      font-weight: 600;
+    }
+
+    .sidebar-help {
+      margin-top: auto;
+      font-size: 11px;
+      line-height: 1.4;
+      padding: 8px;
+      border-radius: 6px;
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    /* 메인 */
+
+    .main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 14px 18px;
+      gap: 12px;
+      overflow: hidden;
+    }
+
+    header.main-header {
+      border-bottom: 1px solid #d5d8e2;
+      padding-bottom: 10px;
+    }
+
+    #main-title {
+      margin: 0 0 4px 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #222;
+    }
+
+    #main-desc {
+      margin: 0;
+      font-size: 13px;
+      color: #555;
+    }
+
+    .main-body {
+      flex: 1;
+      overflow: auto;
+    }
+
+    .view {
+      display: none;
+      height: 100%;
+    }
+
+    .view.active {
+      display: block;
+    }
+
+    /* 버튼 공통 */
+
+    .btn {
+      padding: 6px 12px;
+      border-radius: 5px;
+      border: 1px solid #4a90e2;
+      background: #e6f0ff;
+      font-size: 13px;
+      cursor: pointer;
+      color: #174a8b;
+    }
+
+    .btn:hover {
+      background: #d4e4ff;
+    }
+
+    .btn.secondary {
+      border-color: #b0b4c3;
+      background: #ffffff;
+      color: #444;
+    }
+
+    .btn.secondary:hover {
+      background: #f2f3f7;
+    }
+
+    .btn.danger {
+      border-color: #d9534f;
+      background: #fbeaea;
+      color: #b52b27;
+    }
+
+    .btn.danger:hover {
+      background: #f7d8d7;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar label {
+      font-size: 13px;
+      color: #444;
+    }
+
+    select,
+    input[type="text"],
+    input[type="number"] {
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid #c4c7d2;
+      font-size: 13px;
+    }
+
+    /* SUB 트리 레이아웃 */
+
+    .sub-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.8fr) minmax(260px, 0.9fr);
+      gap: 14px;
+      height: calc(100% - 4px);
+    }
+
+    .sub-tree-panel {
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 0 0 1px #e1e3ee;
+      padding: 10px;
+      overflow: auto;
+    }
+
+    .sub-tree-header {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: #333;
+    }
+
+    .tree-info-text {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 6px;
+    }
+
+    .sub-detail-panel {
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 0 0 1px #e1e3ee;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .panel-title {
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .form-row {
+      display: flex;
+      flex-direction: column;
+      margin-bottom: 6px;
+    }
+
+    .form-row label {
+      font-size: 12px;
+      margin-bottom: 2px;
+      color: #444;
+    }
+
+    .form-row input {
+      width: 100%;
+    }
+
+    .detail-footer {
+      margin-top: 4px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .detail-note {
+      margin-top: 4px;
+      font-size: 11px;
+      color: #777;
+    }
+
+    /* 실제 트리 */
+
+    .sub-tree-root {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 4px;
+    }
+
+    .sub-tree-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 8px;
+      border-radius: 8px;
+      border: 1px dashed #d0d3e2;
+      background: #fafbff;
+      margin-bottom: 4px;
+    }
+
+    .sub-block-title {
+      font-size: 12px;
+      color: #666;
+      margin-bottom: 2px;
+    }
+
+    .node-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .node-row.root-row {
+      justify-content: flex-start;
+    }
+
+    .node-row.child-row {
+      margin-left: 18px;
+    }
+
+    .node-connector {
+      font-size: 18px;
+      font-weight: 600;
+      color: #555;
+      margin: 0 2px;
+      user-select: none;
+    }
+
+    .node-card {
+      border-radius: 6px;
+      border: 1px solid #b9bccb;
+      background: #ffffff;
+      min-width: 140px;
+      max-width: 220px;
+      padding: 6px 7px;
+      font-size: 12px;
+      cursor: pointer;
+      position: relative;
+      transition: box-shadow 0.08s ease, border-color 0.08s ease, transform 0.06s ease;
+    }
+
+    .node-card.assy {
+      border-color: #4a90e2;
+      background: #ecf3ff;
+    }
+
+    .node-card.selected {
+      border-color: #f39c12;
+      box-shadow: 0 0 0 2px rgba(243, 156, 18, 0.28);
+      transform: translateY(-1px);
+    }
+
+    .node-card-title {
+      font-weight: 600;
+      margin-bottom: 3px;
+      color: #222;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .node-card-meta {
+      font-size: 11px;
+      color: #555;
+      line-height: 1.35;
+    }
+
+    .node-badge {
+      position: absolute;
+      right: 4px;
+      top: 4px;
+      font-size: 10px;
+      padding: 1px 5px;
+      border-radius: 10px;
+      background: #dde4ff;
+      color: #27316e;
+    }
+
+    .node-badge.assy {
+      background: #ffd39b;
+      color: #7a3d00;
+    }
+
+    /* 다른 탭들에서 사용하는 표 */
+
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      font-size: 13px;
+    }
+
+    th,
+    td {
+      border: 1px solid #d0d3df;
+      padding: 6px 8px;
+      text-align: left;
+    }
+
+    th {
+      background: #f1f3fb;
+      font-weight: 600;
+    }
+
+    tbody tr:nth-child(even) {
+      background: #fafbff;
+    }
+
+    /* 요약 탭 안내 박스 */
+
+    .summary-hint {
+      font-size: 12px;
+      color: #555;
+      margin-bottom: 8px;
+      padding: 6px 8px;
+      border-radius: 6px;
+      background: #ffffff;
+      box-shadow: 0 0 0 1px #e1e3ee;
+    }
+
+    /* 설정 탭 */
+
+    .settings-panel {
+      background: #ffffff;
+      border-radius: 10px;
+      box-shadow: 0 0 0 1px #e1e3ee;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-width: 600px;
+    }
+
+    .settings-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 13px;
+    }
+
+    .settings-row span.label {
+      font-weight: 600;
+      color: #333;
+    }
+
+    pre.json-preview {
+      background: #111827;
+      color: #e5e7eb;
+      padding: 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      max-height: 260px;
+      overflow: auto;
+      white-space: pre-wrap;
+      word-break: break-all;
+      margin: 0;
+    }
+
+    .settings-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+  <!-- 사이드바 -->
+  <aside class="sidebar">
+    <div class="sidebar-header">공정설계 TOOL</div>
+    <ul id="sidebar-menu"></ul>
+    <div class="sidebar-help">
+      좌측 메뉴로 화면을 전환하고<br>
+      SUB 단위 부품 구성도에서 엑셀 트리를 불러와 편집할 수 있습니다.
+    </div>
+  </aside>
+
+  <!-- 메인 -->
+  <main class="main">
+    <header class="main-header">
+      <h1 id="main-title">SUB 단위 부품 구성도</h1>
+      <p id="main-desc">엑셀의 SUB 트리를 불러와 부품 박스를 편집합니다.</p>
+    </header>
+
+    <section class="main-body">
+      <!-- View 1: SUB 단위 부품 구성도 -->
+      <div id="view-layout" class="view active">
+        <div class="toolbar">
+          <label for="sub-select">SUB 선택</label>
+          <select id="sub-select"></select>
+          <button class="btn" id="btn-reload-sub">불러오기</button>
+          <button class="btn secondary" id="btn-expand-all">전체 새로 그리기</button>
+          <span style="font-size:12px;color:#666;">
+            FastAPI 서버가 켜져 있어야 데이터가 로딩됩니다.
+          </span>
+        </div>
+
+        <div class="sub-layout">
+          <!-- 왼쪽: 트리 패널 -->
+          <div class="sub-tree-panel">
+            <div class="sub-tree-header">SUB 트리</div>
+            <div class="tree-info-text" id="tree-caption">
+              SUB를 선택한 후 불러오기를 눌러 주세요.
+            </div>
+            <div id="sub-tree-root" class="sub-tree-root"></div>
+          </div>
+
+          <!-- 오른쪽: 상세 패널 -->
+          <div class="sub-detail-panel">
+            <div class="panel-title">선택한 노드 상세</div>
+
+            <div id="detail-empty">
+              현재 선택된 노드가 없습니다. 트리의 부품 박스를 클릭하면 상세 정보가 표시됩니다.
+            </div>
+
+            <div id="detail-form" style="display:none;">
+              <div class="form-row">
+                <label>노드 ID</label>
+                <input type="text" id="detail-id" readonly>
+              </div>
+              <div class="form-row">
+                <label>부품명</label>
+                <input type="text" id="detail-name">
+              </div>
+              <div class="form-row">
+                <label>타입</label>
+                <input type="text" id="detail-type">
+              </div>
+              <div class="form-row">
+                <label>양산처</label>
+                <input type="text" id="detail-vehicle">
+              </div>
+              <div class="form-row">
+                <label>재질</label>
+                <input type="text" id="detail-material">
+              </div>
+              <div class="form-row">
+                <label>수량(EA)</label>
+                <input type="number" id="detail-qty" min="0" step="0.1">
+              </div>
+
+              <div class="detail-footer">
+                <button class="btn" id="btn-apply-local">화면에만 반영</button>
+                <button class="btn secondary" id="btn-reset-node">선택 노드 되돌리기</button>
+                <button class="btn danger" id="btn-clear-selection">선택 해제</button>
+              </div>
+
+              <div class="detail-note">
+                아직은 브라우저 화면 안에서만 값이 변경됩니다.  
+                FastAPI 저장 API 설계 후 이 영역에 저장 연동 버튼을 추가하면 됩니다.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- View 2: 작업시간 분석표 -->
+      <div id="view-summary" class="view">
+        <div class="summary-hint">
+          현재 SUB 트리 데이터를 기반으로 간단한 요약 정보를 보여줍니다.  
+          추후 Tact Time, 표준시간 등을 엮어서 확장할 수 있습니다.
+        </div>
+        <table>
+          <thead>
+          <tr>
+            <th>순번</th>
+            <th>부품명</th>
+            <th>타입</th>
+            <th>양산처</th>
+            <th>수량(EA)</th>
+            <th>상위 ASSY</th>
+          </tr>
+          </thead>
+          <tbody id="summary-table-body">
+          <tr>
+            <td colspan="6">먼저 SUB 단위 부품 구성도 화면에서 데이터를 불러오면 이 표가 채워집니다.</td>
+          </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- View 3: 설정 -->
+      <div id="view-settings" class="view">
+        <div class="settings-panel">
+          <div class="settings-row">
+            <span class="label">현재 SUB 트리 JSON 미리보기</span>
+            <span style="font-size:12px;color:#666;">FastAPI 저장 연동 전, 구조를 확인하기 위한 용도입니다.</span>
+            <pre class="json-preview" id="json-preview">데이터가 없습니다. SUB를 불러오면 여기에서 구조를 확인할 수 있습니다.</pre>
+          </div>
+          <div class="settings-row">
+            <span class="label">동작</span>
+            <div class="settings-actions">
+              <button class="btn secondary" id="btn-refresh-json">JSON 갱신</button>
+              <button class="btn" id="btn-download-json">JSON 파일로 저장</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  // FastAPI 주소
+  const API_BASE = "http://localhost:8000";
+
+  // 사이드바 메뉴 정의
+  const menuData = [
+    {
+      id: "layout",
+      label: "SUB 단위 부품 구성도",
+      title: "SUB 단위 부품 구성도",
+      desc: "엑셀의 SUB 트리를 불러와 부품 박스를 편집합니다."
+    },
+    {
+      id: "summary",
+      label: "작업시간 분석표",
+      title: "작업시간 분석표",
+      desc: "불러온 SUB 트리 데이터를 기반으로 요약 정보를 확인합니다."
+    },
+    {
+      id: "settings",
+      label: "설정 및 JSON 확인",
+      title: "설정 및 JSON 확인",
+      desc: "현재 SUB 트리 JSON 구조를 확인하고 파일로 저장합니다."
+    }
+  ];
+
+  const sidebarMenu = document.getElementById("sidebar-menu");
+  const mainTitle = document.getElementById("main-title");
+  const mainDesc = document.getElementById("main-desc");
+
+  // 현재 메모리 상의 트리 데이터
+  let currentTree = null;      // { sub_name, nodes }
+  let currentSelectedId = null;
+
+  // 초기 사이드바 생성
+  menuData.forEach((item, index) => {
+    const li = document.createElement("li");
+    li.textContent = item.label;
+    li.className = "sidebar-item" + (index === 0 ? " active" : "");
+    li.dataset.menuId = item.id;
+    sidebarMenu.appendChild(li);
+  });
+
+  // 사이드바 이벤트
+  sidebarMenu.addEventListener("click", (e) => {
+    const target = e.target.closest(".sidebar-item");
+    if (!target) return;
+
+    const menuId = target.dataset.menuId;
+    const meta = menuData.find(m => m.id === menuId);
+    if (!meta) return;
+
+    document.querySelectorAll(".sidebar-item").forEach(el => el.classList.remove("active"));
+    target.classList.add("active");
+
+    mainTitle.textContent = meta.title;
+    mainDesc.textContent = meta.desc;
+
+    document.querySelectorAll(".view").forEach(v => v.classList.remove("active"));
+    const viewEl = document.getElementById("view-" + menuId);
+    if (viewEl) viewEl.classList.add("active");
+
+    if (menuId === "summary") {
+      updateSummaryView();
+    } else if (menuId === "settings") {
+      refreshJsonPreview();
+    }
+  });
+  document.getElementById("btn-reload-sub").addEventListener("click", loadSubTree);
+  // SUB 목록 불러오기
+  async function loadSubList() {
+    const select = document.getElementById("sub-select");
+    select.innerHTML = "";
+
+    try {
+      const res = await fetch(API_BASE + "/api/subs");
+      if (!res.ok) throw new Error("응답 오류");
+      const subs = await res.json();
+
+      if (!Array.isArray(subs) || subs.length === 0) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "SUB 데이터 없음";
+        select.appendChild(opt);
+        select.disabled = true;
+        return;
+      }
+
+      subs.forEach((name, index) => {
+        const opt = document.createElement("option");
+        opt.value = name;
+        opt.textContent = name;
+        if (index === 0) opt.selected = true;
+        select.appendChild(opt);
+      });
+      select.disabled = false;
+    } catch (err) {
+      console.error("SUB 목록 로딩 실패", err);
+      const select = document.getElementById("sub-select");
+      select.innerHTML = "";
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "서버 연결 실패";
+      select.appendChild(opt);
+      select.disabled = true;
+    }
+  }
+
+  // 선택된 SUB 트리 불러오기
+  async function loadSubTree() {
+    clearSelection();
+    const select = document.getElementById("sub-select");
+    const subName = select.value;
+    const caption = document.getElementById("tree-caption");
+    const rootEl = document.getElementById("sub-tree-root");
+    rootEl.innerHTML = "";
+
+    if (!subName) {
+      caption.textContent = "SUB를 선택한 후 불러오기를 눌러 주세요.";
+      return;
+    }
+
+    caption.textContent = "로딩 중입니다...";
+    try {
+      const encodedName = encodeURIComponent(subName);
+      const res = await fetch(API_BASE + "/api/subs/" + encodedName + "/tree");
+      if (!res.ok) throw new Error("응답 오류");
+      const data = await res.json();
+      currentTree = data;
+      caption.textContent = "트리를 클릭해 부품 상세를 확인하거나 수정할 수 있습니다.";
+      renderSubTree();
+      refreshJsonPreview();
+    } catch (err) {
+      console.error("SUB 트리 로딩 실패", err);
+      caption.textContent = "트리를 불러오지 못했습니다. 서버 상태를 확인해 주세요.";
+      currentTree = null;
+      rootEl.innerHTML = "";
+      refreshJsonPreview();
+    }
+  }
+
+  // 트리 렌더링
+  function renderSubTree() {
+    const rootEl = document.getElementById("sub-tree-root");
+    rootEl.innerHTML = "";
+    currentSelectedId = null;
+    updateDetailPanel();
+
+    if (!currentTree || !Array.isArray(currentTree.nodes) || currentTree.nodes.length === 0) {
+      const span = document.createElement("span");
+      span.textContent = "노드 데이터가 없습니다.";
+      span.style.fontSize = "12px";
+      span.style.color = "#666";
+      rootEl.appendChild(span);
+      return;
+    }
+
+    const nodes = currentTree.nodes.slice();
+    // parent_id 기준으로 자식 맵 생성
+    const childrenMap = {};
+    nodes.forEach(node => {
+      const pid = node.parent_id === null ? "__root__" : node.parent_id;
+      if (!childrenMap[pid]) childrenMap[pid] = [];
+      childrenMap[pid].push(node);
+    });
+    Object.keys(childrenMap).forEach(key => {
+      childrenMap[key].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+    });
+
+    const roots = childrenMap["__root__"] || [];
+
+    roots.forEach(rootNode => {
+      const block = document.createElement("div");
+      block.className = "sub-tree-block";
+
+      const blockTitle = document.createElement("div");
+      blockTitle.className = "sub-block-title";
+      blockTitle.textContent = currentTree.sub_name || "SUB";
+      block.appendChild(blockTitle);
+
+      // 루트 행
+      const rootRow = document.createElement("div");
+      rootRow.className = "node-row root-row";
+      rootRow.appendChild(createNodeCard(rootNode));
+      block.appendChild(rootRow);
+
+      // 1단계 자식 행 (스크린샷 형태에 맞게 + 표시)
+      const firstChildren = childrenMap[rootNode.id] || [];
+      if (firstChildren.length > 0) {
+        const childRow = document.createElement("div");
+        childRow.className = "node-row child-row";
+        firstChildren.forEach((child, index) => {
+          if (index > 0) {
+            const plus = document.createElement("span");
+            plus.className = "node-connector";
+            plus.textContent = "+";
+            childRow.appendChild(plus);
+          }
+          childRow.appendChild(createNodeCard(child));
+        });
+        block.appendChild(childRow);
+      }
+
+      // 2단계 이하 구조가 있다면 필요에 따라 확장 가능
+      // 여기서는 일단 1단계까지만 도식화하고, 나머지는 요약 탭에서 확인하도록 두었습니다.
+
+      rootEl.appendChild(block);
+    });
+  }
+
+  // 노드 카드 생성
+  function createNodeCard(node) {
+    const card = document.createElement("div");
+    card.className = "node-card" + (node.type === "ASSY" ? " assy" : "");
+    card.dataset.nodeId = node.id;
+
+    const title = document.createElement("div");
+    title.className = "node-card-title";
+    title.textContent = node.name || "(이름 없음)";
+    card.appendChild(title);
+
+    const meta = document.createElement("div");
+    meta.className = "node-card-meta";
+    const lines = [];
+    if (node.vehicle) lines.push("양산처: " + node.vehicle);
+    if (node.material) lines.push("재질: " + node.material);
+    if (node.qty !== null && node.qty !== undefined) lines.push("수량: " + node.qty + "EA");
+    meta.textContent = lines.join(" / ");
+    card.appendChild(meta);
+
+    const badge = document.createElement("div");
+    badge.className = "node-badge" + (node.type === "ASSY" ? " assy" : "");
+    badge.textContent = node.type || "NODE";
+    card.appendChild(badge);
+
+    card.addEventListener("click", () => {
+      currentSelectedId = node.id;
+      updateSelectionHighlight();
+      updateDetailPanel();
+    });
+
+    return card;
+  }
+
+  // 선택 시 카드 하이라이트
+  function updateSelectionHighlight() {
+    document.querySelectorAll(".node-card").forEach(card => {
+      if (card.dataset.nodeId === String(currentSelectedId)) {
+        card.classList.add("selected");
+      } else {
+        card.classList.remove("selected");
+      }
+    });
+  }
+
+  // 상세 패널 갱신
+  function updateDetailPanel() {
+    const empty = document.getElementById("detail-empty");
+    const form = document.getElementById("detail-form");
+
+    if (!currentTree || !currentSelectedId) {
+      empty.style.display = "block";
+      form.style.display = "none";
+      return;
+    }
+
+    const node = currentTree.nodes.find(n => String(n.id) === String(currentSelectedId));
+    if (!node) {
+      empty.style.display = "block";
+      form.style.display = "none";
+      return;
+    }
+
+    empty.style.display = "none";
+    form.style.display = "block";
+
+    document.getElementById("detail-id").value = node.id ?? "";
+    document.getElementById("detail-name").value = node.name ?? "";
+    document.getElementById("detail-type").value = node.type ?? "";
+    document.getElementById("detail-vehicle").value = node.vehicle ?? "";
+    document.getElementById("detail-material").value = node.material ?? "";
+    document.getElementById("detail-qty").value = node.qty ?? "";
+  }
+
+  // 선택 해제
+  function clearSelection() {
+    currentSelectedId = null;
+    updateSelectionHighlight();
+    updateDetailPanel();
+  }
+
+  // 상세 편집 내용을 메모리 트리에 반영
+  function applyLocalChanges() {
+    if (!currentTree || !currentSelectedId) return;
+    const node = currentTree.nodes.find(n => String(n.id) === String(currentSelectedId));
+    if (!node) return;
+
+    node.name = document.getElementById("detail-name").value;
+    node.type = document.getElementById("detail-type").value;
+    node.vehicle = document.getElementById("detail-vehicle").value;
+    node.material = document.getElementById("detail-material").value;
+    const qtyVal = document.getElementById("detail-qty").value;
+    node.qty = qtyVal === "" ? null : Number(qtyVal);
+
+    renderSubTree();
+    // 다시 선택
+    currentSelectedId = node.id;
+    updateSelectionHighlight();
+    updateDetailPanel();
+    refreshJsonPreview();
+  }
+
+  // 선택 노드를 원본 상태로 되돌리기 (현재는 서버 원본이 없으므로, 단순히 재로딩)
+  function resetSelectedNode() {
+    if (!currentTree || !currentSelectedId) return;
+    // 가장 간단한 방법은 전체 SUB를 다시 로딩하는 것
+    loadSubTree();
+  }
+
+  // 요약 탭 갱신
+  function updateSummaryView() {
+    const tbody = document.getElementById("summary-table-body");
+    tbody.innerHTML = "";
+
+    if (!currentTree || !Array.isArray(currentTree.nodes) || currentTree.nodes.length === 0) {
+      const tr = document.createElement("tr");
+      const td = document.createElement("td");
+      td.colSpan = 6;
+      td.textContent = "SUB 단위 부품 구성도 화면에서 데이터를 불러오면 요약 정보가 표시됩니다.";
+      tr.appendChild(td);
+      tbody.appendChild(tr);
+      return;
+    }
+
+    const nodes = currentTree.nodes.slice();
+    const idToNode = {};
+    const parentMap = {};
+    nodes.forEach(n => {
+      idToNode[n.id] = n;
+      if (n.parent_id !== null && n.parent_id !== undefined) {
+        parentMap[n.id] = n.parent_id;
+      }
+    });
+
+    nodes
+      .slice()
+      .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
+      .forEach((node, index) => {
+        const tr = document.createElement("tr");
+
+        const td1 = document.createElement("td");
+        td1.textContent = index + 1;
+
+        const td2 = document.createElement("td");
+        td2.textContent = node.name ?? "";
+
+        const td3 = document.createElement("td");
+        td3.textContent = node.type ?? "";
+
+        const td4 = document.createElement("td");
+        td4.textContent = node.vehicle ?? "";
+
+        const td5 = document.createElement("td");
+        td5.textContent = node.qty != null ? node.qty + "EA" : "";
+
+        const parentId = parentMap[node.id];
+        let parentName = "";
+        if (parentId && idToNode[parentId]) {
+          parentName = idToNode[parentId].name ?? "";
+        }
+        const td6 = document.createElement("td");
+        td6.textContent = parentName;
+
+        tr.appendChild(td1);
+        tr.appendChild(td2);
+        tr.appendChild(td3);
+        tr.appendChild(td4);
+        tr.appendChild(td5);
+        tr.appendChild(td6);
+        tbody.appendChild(tr);
+      });
+  }
+
+  // JSON 미리보기 갱신
+  function refreshJsonPreview() {
+    const pre = document.getElementById("json-preview");
+    if (!currentTree) {
+      pre.textContent = "데이터가 없습니다. SUB를 불러오면 여기에서 구조를 확인할 수 있습니다.";
+      return;
+    }
+    pre.textContent = JSON.stringify(currentTree, null, 2);
+  }
+
+  // JSON 파일로 다운로드
+  function downloadJson() {
+    if (!currentTree) return;
+    const blob = new Blob([JSON.stringify(currentTree, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const subName = (currentTree.sub_name || "sub").replace(/[^\w가-힣\-]+/g, "_");
+    a.href = url;
+    a.download = subName + "_tree.json";
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // 이벤트 바인딩
+  document.getElementById("btn-reload-sub").addEventListener("click", () => {
+    loadSubTree();
+  });
+
+  document.getElementById("btn-expand-all").addEventListener("click", () => {
+    renderSubTree();
+  });
+
+  document.getElementById("btn-apply-local").addEventListener("click", () => {
+    applyLocalChanges();
+  });
+
+  document.getElementById("btn-reset-node").addEventListener("click", () => {
+    resetSelectedNode();
+  });
+
+  document.getElementById("btn-clear-selection").addEventListener("click", () => {
+    clearSelection();
+  });
+
+  document.getElementById("btn-refresh-json").addEventListener("click", () => {
+    refreshJsonPreview();
+  });
+
+  document.getElementById("btn-download-json").addEventListener("click", () => {
+    downloadJson();
+  });
+
+  // 초기 로딩
+  window.addEventListener("DOMContentLoaded", () => {
+    loadSubList().then(() => {
+      // 필요하다면 자동으로 한 번 불러오기
+      const select = document.getElementById("sub-select");
+      if (select && select.value) {
+        loadSubTree();
+      }
+    });
+  });
+</script>
+</body>
+</html>

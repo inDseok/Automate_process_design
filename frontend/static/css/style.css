@@ -1,0 +1,537 @@
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #f5f6fa;
+}
+
+.layout {
+    display: flex;
+    height: 100vh;
+}
+
+/* 사이드바 */
+
+.sidebar {
+    width: 240px;
+    background: #202737;
+    color: #f5f6fa;
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.sidebar-header {
+    font-size: 16px;
+    font-weight: 600;
+    padding: 4px 4px 8px 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    margin-bottom: 4px;
+}
+
+#sidebar-menu {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.sidebar-item {
+    padding: 8px 10px;
+    margin-bottom: 4px;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    color: #d0d4e5;
+}
+
+.sidebar-item:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.sidebar-item.active {
+    background: #f5f6fa;
+    color: #202737;
+    font-weight: 600;
+}
+
+.sidebar-help {
+    margin-top: auto;
+    font-size: 11px;
+    line-height: 1.4;
+    padding: 8px;
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.18);
+}
+
+/* 메인 */
+
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    padding: 14px 18px;
+    gap: 12px;
+    overflow: hidden;
+}
+/* 전체 헤더: 3구역 균등 배치 */
+
+header.main-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #d5d8e2;
+    padding: 10px 0 14px 0;
+}
+
+/* 왼쪽: 로고 */
+.header-left {
+    flex: 1;
+    display: flex;
+    align-items: center;
+}
+
+.header-logo {
+    height: 48px;   /* 로고 크기 더 줄임 */
+    width: auto;    /* 비율 유지 */
+}
+/* 가운데: 제목을 중앙 정렬 */
+.header-center {
+    flex: 1;
+    text-align: center;
+}
+
+/* 오른쪽: 공간 균형용 */
+.header-right {
+    flex: 1;
+}
+
+/* 제목 스타일 */
+.header-title {
+    font-size: 24px;
+    font-weight: 700;
+    margin: 0;
+}
+
+
+/* 기존 main-title, main-desc */
+#main-title {
+    margin: 0 0 4px 0;
+    font-size: 18px;
+    font-weight: 600;
+    color: #222;
+}
+
+#main-desc {
+    margin: 0;
+    font-size: 13px;
+    color: #555;
+}
+
+.main-body {
+    flex: 1;
+    overflow: auto;
+}
+
+.view {
+    display: none;
+    height: 100%;
+}
+
+.view.active {
+    display: block;
+}
+
+
+/* 버튼 공통 */
+
+.btn {
+    padding: 6px 12px;
+    border-radius: 5px;
+    border: 1px solid #4a90e2;
+    background: #e6f0ff;
+    font-size: 13px;
+    cursor: pointer;
+    color: #174a8b;
+}
+
+.btn:hover {
+    background: #d4e4ff;
+}
+
+.btn.secondary {
+    border-color: #b0b4c3;
+    background: #ffffff;
+    color: #444;
+}
+
+.btn.secondary:hover {
+    background: #f2f3f7;
+}
+
+.btn.danger {
+    border-color: #d9534f;
+    background: #fbeaea;
+    color: #b52b27;
+}
+
+.btn.danger:hover {
+    background: #f7d8d7;
+}
+
+.toolbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 10px;
+    flex-wrap: wrap;
+}
+
+.toolbar label {
+    font-size: 13px;
+    color: #444;
+}
+
+select,
+input[type="text"],
+input[type="number"] {
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #c4c7d2;
+    font-size: 13px;
+}
+
+/* SUB 트리 레이아웃 */
+
+.sub-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.8fr) minmax(260px, 0.9fr);
+    gap: 14px;
+    height: calc(100% - 4px);
+}
+
+.sub-tree-panel {
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 0 1px #e1e3ee;
+    padding: 10px;
+    overflow: auto;
+}
+
+.sub-tree-header {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 6px;
+    color: #333;
+}
+
+.tree-info-text {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 6px;
+}
+
+.sub-detail-panel {
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 0 1px #e1e3ee;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.panel-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.form-row {
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 6px;
+}
+
+.form-row label {
+    font-size: 12px;
+    margin-bottom: 2px;
+    color: #444;
+}
+
+.form-row input {
+    width: 100%;
+}
+
+.detail-footer {
+    margin-top: 4px;
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.detail-note {
+    margin-top: 4px;
+    font-size: 11px;
+    color: #777;
+}
+
+/* 실제 트리 */
+
+.sub-tree-root {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 4px;
+}
+
+.sub-tree-block {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 8px;
+    border-radius: 8px;
+    border: 1px dashed #d0d3e2;
+    background: #fafbff;
+    margin-bottom: 4px;
+}
+
+.sub-block-title {
+    font-size: 12px;
+    color: #666;
+    margin-bottom: 2px;
+}
+
+.node-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.node-row.root-row {
+    justify-content: flex-start;
+}
+
+.node-row.child-row {
+    margin-left: 18px;
+}
+
+.node-connector {
+    font-size: 18px;
+    font-weight: 600;
+    color: #555;
+    margin: 0 2px;
+    user-select: none;
+}
+
+.node-card {
+    border-radius: 6px;
+    border: 1px solid #b9bccb;
+    background: #ffffff;
+    min-width: 140px;
+    max-width: 220px;
+    padding: 6px 7px;
+    font-size: 12px;
+    cursor: pointer;
+    position: relative;
+    transition: box-shadow 0.08s ease, border-color 0.08s ease, transform 0.06s ease;
+}
+
+.node-card.assy {
+    border-color: #4a90e2;
+    background: #ecf3ff;
+}
+
+.node-card.selected {
+    border-color: #f39c12;
+    box-shadow: 0 0 0 2px rgba(243, 156, 18, 0.28);
+    transform: translateY(-1px);
+}
+
+.node-card-title {
+    font-weight: 600;
+    margin-bottom: 3px;
+    color: #222;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.node-card-meta {
+    font-size: 11px;
+    color: #555;
+    line-height: 1.35;
+}
+
+.node-badge {
+    position: absolute;
+    right: 4px;
+    top: 4px;
+    font-size: 10px;
+    padding: 1px 5px;
+    border-radius: 10px;
+    background: #dde4ff;
+    color: #27316e;
+}
+
+.node-badge.assy {
+    background: #ffd39b;
+    color: #7a3d00;
+}
+
+/* 다른 탭들에서 사용하는 표 */
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+    font-size: 13px;
+}
+
+th,
+td {
+    border: 1px solid #d0d3df;
+    padding: 6px 8px;
+    text-align: left;
+}
+
+th {
+    background: #f1f3fb;
+    font-weight: 600;
+}
+
+tbody tr:nth-child(even) {
+    background: #fafbff;
+}
+
+/* 요약 탭 안내 박스 */
+
+.summary-hint {
+    font-size: 12px;
+    color: #555;
+    margin-bottom: 8px;
+    padding: 6px 8px;
+    border-radius: 6px;
+    background: #ffffff;
+    box-shadow: 0 0 0 1px #e1e3ee;
+}
+
+/* 설정 탭 */
+
+.settings-panel {
+    background: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 0 0 1px #e1e3ee;
+    padding: 10px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 600px;
+}
+
+.settings-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    font-size: 13px;
+}
+
+.settings-row span.label {
+    font-weight: 600;
+    color: #333;
+}
+
+pre.json-preview {
+    background: #111827;
+    color: #e5e7eb;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    max-height: 260px;
+    overflow: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    margin: 0;
+}
+
+.settings-actions {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+/* 트리 전체 영역 */
+#sub-tree-root {
+    font-size: 12px;
+}
+
+/* 각 노드 래퍼 */
+.tree-node {
+    position: relative;
+}
+
+/* 노드 한 줄 (카드 한 줄) */
+.tree-node-row {
+    position: relative;
+    padding: 4px 0 4px 24px;  /* 왼쪽 선 기준 여백 */
+}
+
+/* 루트는 가로선 제거 */
+.tree-node.depth-0 > .tree-node-row::before {
+    content: "";
+    border: none;
+}
+
+/* 가로선: 세로선에서 카드까지 연결 */
+.tree-node-row::before {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 10px;
+    width: 14px;
+    border-top: 1px solid #c0c4d6;
+    transform: translateY(-50%);
+}
+
+/* 자식 묶음: 이 안에만 세로선 */
+.tree-children {
+    position: relative;
+    margin-left: 24px;
+}
+
+/* 세로선: JS가 계산해 준 구간에만 표시 */
+.tree-children::before {
+    content: "";
+    position: absolute;
+    left: 10px;
+    border-left: 1px solid #c0c4d6;
+
+    /* JS에서 세팅하는 값 */
+    top: var(--line-top, 0px);
+    height: var(--line-height, 0px);
+}
+
+
+
+/* 카드 기본 스타일 */
+.node-card {
+    display: inline-block;
+    padding: 4px 8px;
+    border: 1px solid #d5d8e2;
+    border-radius: 4px;
+    background-color: #fff;
+    cursor: pointer;
+    white-space: nowrap;
+}
+
+/* 이동모드 ON일 때 카드에 힌트 */
+body.move-mode .node-card {
+    cursor: crosshair;
+}
+
+.node-card.move-source {
+    outline: 2px dashed #f39c12;
+    outline-offset: 2px;
+}
