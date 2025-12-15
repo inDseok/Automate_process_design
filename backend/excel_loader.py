@@ -38,38 +38,41 @@ def read_right_text(ws, r, c):
     texts = []
     col = c + 1
     max_col = ws.max_column
+    visited_merged = set()  # 이미 처리한 병합셀 기록
 
     while col <= max_col:
         cell = ws.cell(row=r, column=col)
-        cell_coord = f"{get_column_letter(col)}{r}"
+        coord = f"{get_column_letter(col)}{r}"
 
         merged_range = None
         for merged in ws.merged_cells.ranges:
-            if cell_coord in merged:
+            if coord in merged:
                 merged_range = merged
                 break
 
         if merged_range:
-            top_left = ws.cell(merged_range.min_row, merged_range.min_col).value
-            if top_left not in [None, "", "부품명"]:
-                texts.append(str(top_left).strip())
+            key = (merged_range.min_row, merged_range.min_col)
+            if key not in visited_merged:
+                visited_merged.add(key)
+                value = ws.cell(
+                    merged_range.min_row,
+                    merged_range.min_col
+                ).value
+
+                if value not in [None, "", "부품명"]:
+                    texts.append(str(value).strip())
+
             col = merged_range.max_col + 1
             continue
 
         if cell.value not in [None, "", "부품명"]:
             texts.append(str(cell.value).strip())
+            break
 
         col += 1
 
-        if len(texts) > 0:
-            break
+    return " ".join(dict.fromkeys(texts)).strip()
 
-    unique = []
-    for t in texts:
-        if t not in unique:
-            unique.append(t)
-
-    return " ".join(unique).strip()
 
 
 def find_row_with_label(ws, start_r, start_c, label):

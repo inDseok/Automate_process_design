@@ -98,7 +98,9 @@ document.addEventListener("DOMContentLoaded", () => {
       if (caption) caption.textContent = "트리 로딩 중...";
   
       try {
-        const res = await fetch(`${API_BASE}/api/subs/${encodeURIComponent(subName)}/tree`);
+        const res = await fetch(
+          `${API_BASE}/api/excels/${currentExcelId}/subs/${encodeURIComponent(subName)}/tree`
+        );
         if (!res.ok) throw new Error("트리 로딩 실패: " + res.status);
   
         currentTree = await res.json();
@@ -178,7 +180,9 @@ document.addEventListener("DOMContentLoaded", () => {
       select.innerHTML = "";
   
       try {
-        const res = await fetch(API_BASE + "/api/subs");
+        const res = await fetch(
+          `${API_BASE}/api/excels/${currentExcelId}/subs`
+        );
         const subs = await res.json();
   
         subs.forEach(name => {
@@ -211,6 +215,15 @@ document.addEventListener("DOMContentLoaded", () => {
       fileInput.click();
 
     }
+    async function loadSubTreeByExcel(subName) {
+      const res = await fetch(
+        `${API_BASE}/api/excels/${currentExcelId}/subs/${encodeURIComponent(subName)}/tree`
+      );
+      if (!res.ok) throw new Error("트리 로딩 실패");
+    
+      currentTree = await res.json();
+      renderSubTree();
+    }
     
     async function handleExcelFileSelected(file) {
       const caption = document.getElementById("tree-caption");
@@ -220,13 +233,18 @@ document.addEventListener("DOMContentLoaded", () => {
       formData.append("file", file);
   
       try {
-        const res = await fetch(API_BASE + "/api/upload_excel", {
+        const res = await fetch(API_BASE + "/api/excels", {
           method: "POST",
           body: formData
         });
-        if (!res.ok) throw new Error("업로드 실패: " + res.status);
-  
-        currentTree = await res.json();
+        if (!res.ok) throw new Error("업로드 실패");
+        
+        const data = await res.json();
+        currentExcelId = data.excel_id;
+        
+        const firstSub = data.subs[0];
+        await loadSubTreeByExcel(firstSub);
+        
   
         if (caption) caption.textContent = `${file.name} 트리 불러옴`;
         renderSubTree();
@@ -380,19 +398,24 @@ document.addEventListener("DOMContentLoaded", () => {
     // Buttons
     // =========================
     async function saveSessionState(subName, selectedId) {
-        try {
-          await fetch(API_BASE + "/api/state", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              sub_name: subName,
-              selected_id: selectedId
-            })
-          });
-        } catch (e) {
-          console.error("세션 상태 저장 실패:", e);
-        }
+      if (!currentExcelId) return;
+    
+      try {
+        await fetch(API_BASE + "/api/state", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({
+            excel_id: currentExcelId,
+            sub_name: subName,
+            selected_id: selectedId
+          })
+        });
+      } catch (e) {
+        console.error("세션 상태 저장 실패:", e);
+      }
     }
+    
     const btnReload = document.getElementById("btn-reload-sub");
     if (btnReload) btnReload.addEventListener("click", uploadExcelAndLoadTree);
     
@@ -426,7 +449,7 @@ document.addEventListener("DOMContentLoaded", () => {
         };
       
         const res = await fetch(
-          `${API_BASE}/api/subs/${encodeURIComponent(subName)}/nodes/${encodeURIComponent(nodeId)}`,
+          `${API_BASE}/api/excels/${currentExcelId}/subs/${currentTree.sub_name}/nodes/${currentSelectedId}`,
           {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
@@ -467,6 +490,7 @@ document.addEventListener("DOMContentLoaded", () => {
         await fetch(API_BASE + "/api/state", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
+            credentials: "include",
             body: JSON.stringify({
                 sub_name: currentTree?.sub_name ?? null,
                 selected_id: null
@@ -475,30 +499,36 @@ document.addEventListener("DOMContentLoaded", () => {
     });
     
     //세션 생성
-      async function restoreSessionState() {
-        try {
-            const res = await fetch(API_BASE + "/api/state");
-            if (!res.ok) return;
+    async function restoreSessionState() {
+      try {
+        const res = await fetch(API_BASE + "/api/state", {
+          credentials: "include"
+        });
+        if (!res.ok) return;
     
-            const state = await res.json();
-            if (!state.sub_name) return;
+        const state = await res.json();
+        if (!state.excel_id || !state.sub_name) return;
     
-            const treeRes = await fetch(
-                API_BASE + "/api/subs/" + encodeURIComponent(state.sub_name) + "/tree"
-            );
-            if (!treeRes.ok) return;
+        currentExcelId = state.excel_id;
     
-            currentTree = await treeRes.json();
-            renderSubTree();
+        const treeRes = await fetch(
+          `${API_BASE}/api/excels/${state.excel_id}/subs/${state.sub_name}/tree`,
+          { credentials: "include" }
+        );
+        if (!treeRes.ok) return;
     
-            if (state.selected_id) {
-                currentSelectedId = state.selected_id;
-                updateDetailPanel();
-            }
-        } catch (e) {
-            console.error("세션 상태 복구 실패:", e);
+        currentTree = await treeRes.json();
+        renderSubTree();
+    
+        if (state.selected_id) {
+          currentSelectedId = state.selected_id;
+          updateDetailPanel();
         }
+      } catch (e) {
+        console.error("세션 상태 복구 실패:", e);
+      }
     }
+    
     restoreSessionState();
 
 });
