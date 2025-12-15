@@ -498,7 +498,7 @@ pre.json-preview {
 /* 자식 묶음: 이 안에만 세로선 */
 .tree-children {
     position: relative;
-    margin-left: 24px;
+    margin-left: 100px;
 }
 
 /* 세로선: JS가 계산해 준 구간에만 표시 */
