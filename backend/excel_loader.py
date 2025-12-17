@@ -7,73 +7,54 @@ from io import BytesIO
 import re
 
 EXCEL_PATH = r"C:\Users\USER\Desktop\공정설계 자동화\H_Lamp 공정설계 TOOL_korea Version 7.0\H_Lamp_공정설계 TOOL_Korea Version 7.0_230717.xlsm"
-TARGET_SHEET = "1. SUB 단위 부품구성도(STD)"
+TARGET_SHEET = "STD_LHD_LD"
 
 
 def list_sub_names() -> List[str]:
     return ["외주SUB(위트)"]
 
 
-def extract_qty_from_text(text: str):
-    """
-    '1EA', '4 EA', 'QTY 5EA', '수량: 2EA' 등에서 숫자만 추출해서 float 반환
-    """
-    if text is None:
-        return None
+def get_cell_value(ws, r, c):
+    coord = f"{get_column_letter(c)}{r}"
 
-    s = str(text).upper()
-    s = s.replace(" ", "")
+    for merged in ws.merged_cells.ranges:
+        if coord in merged:
+            return ws.cell(
+                merged.min_row,
+                merged.min_col
+            ).value
 
-    m = re.search(r"(\d+(\.\d+)?)EA", s)
-    if not m:
-        return None
+    return ws.cell(row=r, column=c).value
 
-    try:
-        return float(m.group(1))
-    except:
-        return None
-
-
-def read_right_text(ws, r, c):
-    texts = []
+def read_right_value(ws, r, c):
     col = c + 1
     max_col = ws.max_column
-    visited_merged = set()  # 이미 처리한 병합셀 기록
+    visited_merged = set()
 
     while col <= max_col:
-        cell = ws.cell(row=r, column=col)
         coord = f"{get_column_letter(col)}{r}"
 
-        merged_range = None
+        value = ws.cell(row=r, column=col).value
+
         for merged in ws.merged_cells.ranges:
             if coord in merged:
-                merged_range = merged
+                key = (merged.min_row, merged.min_col)
+                if key in visited_merged:
+                    value = None
+                else:
+                    visited_merged.add(key)
+                    value = ws.cell(
+                        merged.min_row,
+                        merged.min_col
+                    ).value
                 break
 
-        if merged_range:
-            key = (merged_range.min_row, merged_range.min_col)
-            if key not in visited_merged:
-                visited_merged.add(key)
-                value = ws.cell(
-                    merged_range.min_row,
-                    merged_range.min_col
-                ).value
-
-                if value not in [None, "", "부품명"]:
-                    texts.append(str(value).strip())
-
-            col = merged_range.max_col + 1
-            continue
-
-        if cell.value not in [None, "", "부품명"]:
-            texts.append(str(cell.value).strip())
-            break
+        if value not in [None, "", "부품명", "품번", "수량", "재질"]:
+            return str(value).strip()
 
         col += 1
 
-    return " ".join(dict.fromkeys(texts)).strip()
-
-
+    return None
 
 def find_row_with_label(ws, start_r, start_c, label):
     for offset in range(1, 10):
@@ -98,34 +79,10 @@ def find_row_with_label(ws, start_r, start_c, label):
     raise ValueError(f"Label '{label}' not found below row {start_r}")
 
 
-def read_qty_robust(ws, start_row, start_col):
-    """
-    부품 블록 주변(아래 몇 줄, 오른쪽 몇 칸)에서
-    EA 패턴을 스캔해서 qty float을 반환
-    """
-    for r in range(start_row, start_row + 6):
-        for c in range(start_col, start_col + 12):
-            coord = f"{get_column_letter(c)}{r}"
-
-            value = ws.cell(row=r, column=c).value
-
-            # 병합 셀 처리: 병합 범위라면 top-left 값 사용
-            for merged in ws.merged_cells.ranges:
-                if coord in merged:
-                    value = ws.cell(merged.min_row, merged.min_col).value
-                    break
-
-            qty = extract_qty_from_text(value)
-            if qty is not None:
-                return qty
-
-    return None
-
-
-def read_vehicle(ws, r):
+def read_part_no(ws, r):
     for col in range(1, 200):
         cell = ws.cell(row=r, column=col)
-        if cell.value == "양산처":
+        if cell.value == "품번":
             val_cell = ws.cell(row=r, column=col + 1)
             return str(val_cell.value).strip() if val_cell.value is not None else None
     return None
@@ -139,30 +96,41 @@ def parse_block(ws, sheet_name: str, label_row: int, label_col: int):
     r = label_row
     c = label_col
 
-    # 1) 부품명
-    name = read_right_text(ws, r, c)
+    # 1) 부품명 (첫 줄)
+    name = read_right_value(ws, r, c)
 
-    # 2) 양산처 라인 찾기
-    row2_offset = find_row_with_label(ws, r, c, "양산처")
-    row2 = r + row2_offset
-    vehicle = read_vehicle(ws, row2)
+    # 2) 품번
+    try:
+        part_row = r + find_row_with_label(ws, r, c, "품번")
+        part_no = read_right_value(ws, part_row, c)
+    except Exception:
+        part_no = None
 
-    # 3) 재질
-    material_row_offset = find_row_with_label(ws, r, c, "재질")
-    material = read_right_text(ws, r + material_row_offset, c)
+    # 3) 수량
+    try:
+        qty_row = r + find_row_with_label(ws, r, c, "수량")
+        raw_qty = read_right_value(ws, qty_row, c)
+    except Exception:
+        raw_qty = None
 
-    # 4) QTY (주변 스캔)
-    qty = read_qty_robust(ws, r, c)
+    # 4) 재질
+    try:
+        mat_row = r + find_row_with_label(ws, r, c, "재질")
+        material = read_right_value(ws, mat_row, c)
+    except Exception:
+        material = None
 
     return {
         "id": make_stable_id(sheet_name, r, c),
         "name": name,
-        "qty": qty,
-        "vehicle": vehicle,
+        "qty": raw_qty,
+        "part_no": part_no,
         "material": material,
         "row": r,
         "col": c
     }
+
+
 
 
 def build_tree_from_sheet(ws, sheet_name: str, sub_name: str) -> SubTree:
@@ -195,7 +163,7 @@ def build_tree_from_sheet(ws, sheet_name: str, sub_name: str) -> SubTree:
                 order=idx,
                 type="PART",
                 name=box["name"],
-                vehicle=box["vehicle"],
+                part_no=box["part_no"],
                 material=box["material"],
                 qty=box["qty"]
             )

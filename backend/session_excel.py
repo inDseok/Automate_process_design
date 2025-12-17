@@ -1,5 +1,6 @@
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import datetime
+from zoneinfo import ZoneInfo
 from pathlib import Path
 from threading import RLock
 import json
@@ -14,7 +15,7 @@ from fastapi import FastAPI, HTTPException, Request, Response, UploadFile, File
 SESSION_COOKIE = "sid"
 
 def utc_now_iso() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(ZoneInfo("Asia/Seoul")).isoformat()
 
 
 class ExcelUploadResponse(BaseModel):
@@ -44,7 +45,7 @@ def merge_user_edits(base_tree: SubTree, saved_tree: SubTree) -> SubTree:
             sn = saved_map[n.id]
             base_tree.nodes[i].name = sn.name
             base_tree.nodes[i].type = sn.type
-            base_tree.nodes[i].vehicle = sn.vehicle
+            base_tree.nodes[i].part_no = sn.part_no
             base_tree.nodes[i].material = sn.material
             base_tree.nodes[i].qty = sn.qty
 
@@ -279,5 +280,4 @@ def get_or_create_sid(request: Request, response: Response) -> str:
             samesite="lax",
         )
     return sid
-
 

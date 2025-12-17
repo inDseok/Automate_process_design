@@ -131,11 +131,6 @@ header.main-header {
     color: #555;
 }
 
-.main-body {
-    flex: 1;
-    overflow: auto;
-}
-
 .view {
     display: none;
     height: 100%;
@@ -207,19 +202,21 @@ input[type="number"] {
 /* SUB 트리 레이아웃 */
 
 .sub-layout {
-    display: grid;
-    grid-template-columns: minmax(0, 1.8fr) minmax(260px, 0.9fr);
+    display: flex;
     gap: 14px;
-    height: calc(100% - 4px);
+    height: calc(100vh - 140px); /* toolbar 높이 */
 }
 
+
 .sub-tree-panel {
+    flex: 1;
     background: #ffffff;
     border-radius: 10px;
     box-shadow: 0 0 0 1px #e1e3ee;
     padding: 10px;
-    overflow: auto;
+    overflow-y: auto;
 }
+
 
 .sub-tree-header {
     font-size: 13px;
@@ -235,14 +232,23 @@ input[type="number"] {
 }
 
 .sub-detail-panel {
+    width: 360px;              /* 기존 크기 있으면 유지 */
+    flex-shrink: 0;
+
     background: #ffffff;
     border-radius: 10px;
     box-shadow: 0 0 0 1px #e1e3ee;
     padding: 10px 12px;
+
     display: flex;
     flex-direction: column;
     gap: 6px;
+
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
 }
+
 
 .panel-title {
     font-size: 13px;
@@ -365,6 +371,9 @@ input[type="number"] {
     font-size: 11px;
     color: #555;
     line-height: 1.35;
+
+    white-space: normal;
+    word-break: break-word;
 }
 
 .node-badge {
@@ -523,9 +532,16 @@ pre.json-preview {
     border-radius: 4px;
     background-color: #fff;
     cursor: pointer;
-    white-space: nowrap;
+
+    max-width: 220px;     /* 기존 유지 */
+    word-break: break-word;
 }
 
+.node-card-meta .meta-line {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
 /* 이동모드 ON일 때 카드에 힌트 */
 body.move-mode .node-card {
     cursor: crosshair;
@@ -534,4 +550,19 @@ body.move-mode .node-card {
 .node-card.move-source {
     outline: 2px dashed #f39c12;
     outline-offset: 2px;
+}
+
+/* 외주 노드 표시 */
+.node-card.outsource {
+    border-color: #d9534f;
+    background: #fdecea;
+}
+
+.node-card.outsource .node-card-title {
+    color: #b52b27;
+}
+
+.node-card.outsource .node-badge {
+    background: #f5b7b1;
+    color: #7b241c;
 }
