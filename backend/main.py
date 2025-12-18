@@ -15,6 +15,7 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from pathlib import Path
 
+from backend.bom_service import create_bom_run, DATA_DIR
 from backend.models import SubTree, SubNodePatch
 from backend.excel_loader import list_sub_names, load_sub_tree, parse_uploaded_excel,build_tree_from_sheet
 from fastapi import Cookie
@@ -211,12 +212,6 @@ def legacy_save_tree_now(sub_name: str, request: Request, response: Response):
     return {"ok": True}
 
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
-from fastapi.responses import FileResponse
-from pathlib import Path
-
-from backend.bom_service import create_bom_run, DATA_DIR
-
 @app.post("/api/bom/upload")
 async def upload_bom(file: UploadFile = File(...)):
     binary = await file.read()
@@ -230,11 +225,11 @@ async def upload_bom(file: UploadFile = File(...)):
 
 @app.get("/api/bom/{bom_id}/tree")
 def get_tree(bom_id: str, spec: str):
-    root = DATA_DIR / bom_id
+    root = DATA_DIR / "bom_runs" / bom_id
     tree_excel = root / "tree.xlsx"
 
     if not tree_excel.exists():
-        raise HTTPException(status_code=404, detail="BOM 파일 없음")
+        raise HTTPException(status_code=404, detail="파일 없음")
 
     wb = load_workbook(tree_excel, data_only=True)
 
