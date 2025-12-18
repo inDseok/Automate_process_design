@@ -1,20 +1,239 @@
 document.addEventListener("DOMContentLoaded", () => {
   const API_BASE = "http://localhost:8000";
 
-  let currentTree = null;
-  let currentSelectedId = null;
+  const btnReload = document.getElementById("btn-reload-sub");
+  const fileInput = document.getElementById("excel-file");
+  const caption = document.getElementById("tree-caption");
 
-  // =========================
-  // Selection / Detail Panel
-  // =========================
+  const modal = document.getElementById("spec-modal");
+  const specList = document.getElementById("spec-list");
+  const btnApply = document.getElementById("btn-spec-apply");
+  const btnCancel = document.getElementById("btn-spec-cancel");
 
-  function updateSelectionHighlight() {
-    document.querySelectorAll(".node-card").forEach(card => {
-      if (card.dataset.nodeId === String(currentSelectedId)) {
-        card.classList.add("selected");
-      } else {
-        card.classList.remove("selected");
+  let selectedSpecName = null;
+
+
+  /* =========================
+     1. 불러오기 → 파일 선택
+     ========================= */
+  if (btnReload && fileInput) {
+    btnReload.addEventListener("click", (e) => {
+      e.preventDefault();
+      fileInput.value = "";
+      fileInput.click();
+    });
+  }
+
+  /* =========================
+     2. 파일 선택됨
+     ========================= */
+  if (fileInput) {
+    fileInput.addEventListener("change", async () => {
+      if (!fileInput.files.length) return;
+      const file = fileInput.files[0];
+      await handleBomFile(file);
+    });
+  }
+
+  /* =========================
+     3. BOM → 사양 추출
+     ========================= */
+     async function handleBomFile(file) {
+      if (caption) caption.textContent = "사양 추출 중...";
+    
+      const formData = new FormData();
+      formData.append("file", file);
+    
+      try {
+        const res = await fetch(API_BASE + "/api/bom/upload", {
+          method: "POST",
+          body: formData
+        });
+    
+        console.log("spec api status =", res.status);
+    
+        if (!res.ok) {
+          throw new Error("사양 추출 실패");
+        }
+    
+        const data = await res.json();
+    
+        if (caption) caption.textContent = "사양 선택 대기 중...";
+    
+        openSpecModal(data.spec_info);
+        window.currentBomId = data.bom_id;
+    
+      } catch (err) {
+        console.error(err);
+        if (caption) caption.textContent = "사양 추출 실패";
+        alert("사양 추출에 실패했습니다. 서버 로그를 확인하세요.");
       }
+    }
+    
+
+  /* =========================
+     4. 사양 선택 모달
+     ========================= */
+  function openSpecModal(specData) {
+    specList.innerHTML = "";
+    selectedSpecCol = null;
+
+    (specData.sheets || []).forEach(sheet => {
+      const title = document.createElement("div");
+      title.textContent = sheet.sheet;
+      title.style.fontWeight = "600";
+      title.style.margin = "10px 0 6px";
+      specList.appendChild(title);
+
+      (sheet.specs || []).forEach(spec => {
+        const label = document.createElement("label");
+        label.style.display = "block";
+        label.style.fontSize = "13px";
+        label.style.marginBottom = "6px";
+
+        const radio = document.createElement("input");
+        radio.type = "radio";
+        radio.name = "spec";
+        radio.value = spec.col;
+
+        radio.dataset.specName = spec.spec_name;
+
+        radio.addEventListener("change", () => {
+          selectedSpecCol = Number(spec.col);
+          selectedSpecName = spec.spec_name;
+        });
+
+        label.appendChild(radio);
+        label.append(" " + spec.spec_name);
+
+        specList.appendChild(label);
+      });
+    });
+
+    modal.style.display = "flex";
+  }
+
+  /* =========================
+     5. 모달 버튼
+     ========================= */
+  if (btnCancel) {
+    btnCancel.addEventListener("click", (e) => {
+      e.preventDefault();
+      modal.style.display = "none";
+      if (caption) caption.textContent = "사양 선택 취소됨";
+    });
+  }
+
+  if (btnApply) {
+    btnApply.addEventListener("click", async (e) => {
+      e.preventDefault();
+    
+      if (!selectedSpecName) {
+        alert("사양을 선택하세요.");
+        return;
+      }
+    
+      modal.style.display = "none";
+      caption.textContent = `선택된 사양 = ${selectedSpecName}`;
+    
+      await loadTreeForSelectedSpec();
+    });
+  
+  }
+  
+  function normalizeTreeTypes(tree) {
+    if (!tree || !Array.isArray(tree.nodes)) return tree;
+  
+    tree.nodes = tree.nodes.map(n => ({
+      ...n,
+      // id는 그대로 둔다 (string)
+      id: String(n.id),
+      parent_id:
+        n.parent_id === null || n.parent_id === undefined
+          ? null
+          : String(n.parent_id),
+      order:
+        n.order === null || n.order === undefined || n.order === ""
+          ? 0
+          : Number(n.order),
+    }));
+  
+    return tree;
+  }
+
+  
+  async function loadTreeForSelectedSpec() {
+    if (!currentBomId) {
+      alert("BOM이 선택되지 않았습니다.");
+      return;
+    }
+  
+    if (!selectedSpecName) {
+      alert("사양이 선택되지 않았습니다.");
+      return;
+    }
+  
+    try {
+      caption.textContent = "트리 생성 중...";
+  
+      const url = `${API_BASE}/api/bom/${currentBomId}/tree?spec=${encodeURIComponent(selectedSpecName)}`;
+  
+      const res = await fetch(url);
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.detail || "트리 로드 실패");
+      }
+  
+      const tree = await res.json();
+      console.log("TREE RAW =", tree);
+      // 타입 보정 (기존에 쓰던 로직 있으면 그대로 재사용)
+      currentTree = normalizeTreeTypes ? normalizeTreeTypes(tree) : tree;
+  
+      // 선택 상태 초기화
+      currentSelectedId = null;
+  
+      // 실제 트리 렌더링
+      renderSubTree(currentTree);
+  
+      caption.textContent = `트리 로드 완료 (${selectedSpecName})`;
+    } catch (e) {
+      console.error(e);
+      caption.textContent = "트리 로드 실패";
+      alert(e.message);
+    }
+  }
+  
+  // =========================
+  // Tree Rendering
+  // =========================
+
+  function adjustTreeLines() {
+    const containers = document.querySelectorAll("#sub-tree-root .tree-children");
+
+    containers.forEach(container => {
+      const rows = [];
+      container.childNodes.forEach(child => {
+        if (child.nodeType === Node.ELEMENT_NODE && child.classList.contains("tree-node")) {
+          const row = child.querySelector(".tree-node-row");
+          if (row) rows.push(row);
+        }
+      });
+
+      if (rows.length === 0) {
+        container.style.removeProperty("--line-top");
+        container.style.removeProperty("--line-height");
+        return;
+      }
+
+      const parentRect = container.getBoundingClientRect();
+      const firstRect = rows[0].getBoundingClientRect();
+      const lastRect = rows[rows.length - 1].getBoundingClientRect();
+
+      const firstMid = firstRect.top + firstRect.height / 2 - parentRect.top;
+      const lastMid = lastRect.top + lastRect.height / 2 - parentRect.top;
+
+      container.style.setProperty("--line-top", firstMid + "px");
+      container.style.setProperty("--line-height", Math.max(0, lastMid - firstMid) + "px");
     });
   }
 
@@ -52,288 +271,6 @@ document.addEventListener("DOMContentLoaded", () => {
     setVal("detail-qty", node.qty);
   }
 
-  function clearSelection() {
-    currentSelectedId = null;
-    updateSelectionHighlight();
-    updateDetailPanel();
-  }
-
-  function applyLocalChanges() {
-    if (!currentTree || !currentSelectedId) return;
-    const node = currentTree.nodes?.find(n => String(n.id) === String(currentSelectedId));
-    if (!node) return;
-
-    const getVal = (id) => {
-      const el = document.getElementById(id);
-      return el ? el.value : "";
-    };
-
-    node.name = getVal("detail-name");
-    node.type = getVal("detail-type");
-    node.part_no = getVal("detail-part_no");
-    node.material = getVal("detail-material");
-
-    const qtyVal = getVal("detail-qty").trim();
-    node.qty = (qtyVal === "") ? null : Number(qtyVal);
-
-    // Re-render and restore selection
-    const keepId = node.id;
-    renderSubTree();
-    currentSelectedId = keepId;
-    updateSelectionHighlight();
-    updateDetailPanel();
-
-    if (typeof refreshJsonPreview === "function") {
-      refreshJsonPreview();
-    }
-  }
-
-  // 서버에서 SUB 트리를 다시 로딩 (API가 있을 때만 사용)
-  async function loadSubTree() {
-    const select = document.getElementById("sub-select");
-    const subName = select ? select.value : null;
-    if (!subName) return;
-
-    const caption = document.getElementById("tree-caption");
-    if (caption) caption.textContent = "트리 로딩 중...";
-
-    try {
-      const res = await fetch(
-        `${API_BASE}/api/excels/${currentExcelId}/subs/${encodeURIComponent(subName)}/tree`
-      );
-      if (!res.ok) throw new Error("트리 로딩 실패: " + res.status);
-
-      currentTree = await res.json();
-
-      if (caption) caption.textContent = `${subName} 트리 로드됨`;
-      renderSubTree();
-    } catch (err) {
-      if (caption) caption.textContent = "트리 로딩 실패";
-      console.error(err);
-    }
-  }
-
-  // =========================
-  // Node Card
-  // =========================
-
-  function createNodeCard(node) {
-    const card = document.createElement("div");
-
-    const classNames = ["node-card"];
-
-    if (node.type === "ASSY") {
-        classNames.push("assy");
-    }
-
-    if (node.type === "외주") {
-        classNames.push("outsource");
-    }
-
-    card.className = classNames.join(" ");
-    card.dataset.nodeId = node.id;
-
-    // -----------------
-    // 제목 (부품명)
-    // -----------------
-    const title = document.createElement("div");
-    title.className = "node-card-title";
-    title.textContent = node.name || "(이름 없음)";
-    card.appendChild(title);
-
-    // -----------------
-    // 메타 영역 (3줄 고정)
-    // -----------------
-    const meta = document.createElement("div");
-    meta.className = "node-card-meta";
-
-    // 품번
-    const partLine = document.createElement("div");
-    partLine.className = "meta-line";
-    partLine.textContent = `품번: ${node.part_no ?? "-"}`;
-    meta.appendChild(partLine);
-
-    // 재질
-    const materialLine = document.createElement("div");
-    materialLine.className = "meta-line";
-    materialLine.textContent = `재질: ${node.material ?? "-"}`;
-    meta.appendChild(materialLine);
-
-    // 수량
-    const qtyLine = document.createElement("div");
-    qtyLine.className = "meta-line";
-    qtyLine.textContent =
-        node.qty !== null && node.qty !== undefined
-            ? `수량: ${node.qty}EA`
-            : "수량: -";
-    meta.appendChild(qtyLine);
-
-    card.appendChild(meta);
-
-    // -----------------
-    // 타입 배지
-    // -----------------
-    const badge = document.createElement("div");
-    badge.className = "node-badge" + (node.type === "ASSY" ? " assy" : "");
-    badge.textContent = node.type || "NODE";
-    card.appendChild(badge);
-
-    // -----------------
-    // 클릭 이벤트
-    // -----------------
-    card.addEventListener("click", async (e) => {
-        e.stopPropagation();
-
-        currentSelectedId = node.id;
-        updateSelectionHighlight();
-        updateDetailPanel();
-
-        if (currentTree) {
-            try {
-                await saveSessionState(currentTree.sub_name, String(node.id));
-            } catch (err) {
-                console.error("세션 저장 실패:", err);
-            }
-        }
-    });
-
-    return card;
-}
-
-    
-
-  // =========================
-  // SUB List
-  // =========================
-
-  async function loadSubList() {
-    const select = document.getElementById("sub-select");
-    if (!select) return;
-
-    select.innerHTML = "";
-
-    try {
-      const res = await fetch(
-        `${API_BASE}/api/excels/${currentExcelId}/subs`
-      );
-      const subs = await res.json();
-
-      subs.forEach(name => {
-        const opt = document.createElement("option");
-        opt.value = name;
-        opt.textContent = name;
-        select.appendChild(opt);
-      });
-
-      // SUB 선택 변경 시 트리 로딩
-      select.addEventListener("change", () => {
-        clearSelection();
-        loadSubTree();
-      });
-
-    } catch (err) {
-      console.error("SUB 목록 로딩 실패:", err);
-    }
-  }
-
-  // =========================
-  // Excel Upload
-  // =========================
-
-  function uploadExcelAndLoadTree() {
-    const fileInput = document.getElementById("excel-file");
-    if (!fileInput) return;
-
-    fileInput.value = "";
-    fileInput.click();
-
-  }
-  async function loadSubTreeByExcel(subName) {
-    const res = await fetch(
-      `${API_BASE}/api/excels/${currentExcelId}/subs/${encodeURIComponent(subName)}/tree`
-    );
-    if (!res.ok) throw new Error("트리 로딩 실패");
-  
-    currentTree = await res.json();
-    renderSubTree();
-  }
-  
-  async function handleExcelFileSelected(file) {
-    const caption = document.getElementById("tree-caption");
-    if (caption) caption.textContent = "엑셀 업로드 중...";
-
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const res = await fetch(API_BASE + "/api/excels", {
-        method: "POST",
-        body: formData
-      });
-      if (!res.ok) throw new Error("업로드 실패");
-      
-      const data = await res.json();
-      currentExcelId = data.excel_id;
-      
-      const firstSub = data.subs[0];
-      await loadSubTreeByExcel(firstSub);
-      
-
-      if (caption) caption.textContent = `${file.name} 트리 불러옴`;
-      renderSubTree();
-
-      await saveSessionState(currentTree.sub_name, null);
-    } catch (err) {
-      if (caption) caption.textContent = "업로드 실패";
-      console.error(err);
-    }
-  }
-
-  function bindExcelInputOnce() {
-    const fileInput = document.getElementById("excel-file");
-    if (!fileInput) return;
-
-    fileInput.addEventListener("change", async () => {
-      const file = fileInput.files && fileInput.files[0];
-      if (!file) return;
-      await handleExcelFileSelected(file);
-    });
-  }
-
-  // =========================
-  // Tree Rendering
-  // =========================
-
-  function adjustTreeLines() {
-    const containers = document.querySelectorAll("#sub-tree-root .tree-children");
-
-    containers.forEach(container => {
-      const rows = [];
-      container.childNodes.forEach(child => {
-        if (child.nodeType === Node.ELEMENT_NODE && child.classList.contains("tree-node")) {
-          const row = child.querySelector(".tree-node-row");
-          if (row) rows.push(row);
-        }
-      });
-
-      if (rows.length === 0) {
-        container.style.removeProperty("--line-top");
-        container.style.removeProperty("--line-height");
-        return;
-      }
-
-      const parentRect = container.getBoundingClientRect();
-      const firstRect = rows[0].getBoundingClientRect();
-      const lastRect = rows[rows.length - 1].getBoundingClientRect();
-
-      const firstMid = firstRect.top + firstRect.height / 2 - parentRect.top;
-      const lastMid = lastRect.top + lastRect.height / 2 - parentRect.top;
-
-      container.style.setProperty("--line-top", firstMid + "px");
-      container.style.setProperty("--line-height", Math.max(0, lastMid - firstMid) + "px");
-    });
-  }
-
   function renderSubTree() {
     const container = document.getElementById("sub-tree-root");
     if (!container) return;
@@ -355,6 +292,9 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const childMap = {};
     nodes.forEach(n => {
+      if (n.id === n.parent_id) {
+        console.error("SELF PARENT NODE:", n);
+      }
       const pid = (n.parent_id === null || n.parent_id === undefined) ? "ROOT" : n.parent_id;
       if (!childMap[pid]) childMap[pid] = [];
       childMap[pid].push(n);
@@ -363,6 +303,89 @@ document.addEventListener("DOMContentLoaded", () => {
     Object.keys(childMap).forEach(key => {
       childMap[key].sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
     });
+
+    function createNodeCard(node) {
+      const card = document.createElement("div");
+  
+      const classNames = ["node-card"];
+  
+      if (node.type === "ASSY") {
+          classNames.push("assy");
+      }
+  
+      if (node.type === "외주") {
+          classNames.push("outsource");
+      }
+  
+      card.className = classNames.join(" ");
+      card.dataset.nodeId = node.id;
+  
+      // -----------------
+      // 제목 (부품명)
+      // -----------------
+      const title = document.createElement("div");
+      title.className = "node-card-title";
+      title.textContent = node.name || "(이름 없음)";
+      card.appendChild(title);
+  
+      // -----------------
+      // 메타 영역 (3줄 고정)
+      // -----------------
+      const meta = document.createElement("div");
+      meta.className = "node-card-meta";
+  
+      // 품번
+      const partLine = document.createElement("div");
+      partLine.className = "meta-line";
+      partLine.textContent = `품번: ${node.part_no ?? "-"}`;
+      meta.appendChild(partLine);
+  
+      // 재질
+      const materialLine = document.createElement("div");
+      materialLine.className = "meta-line";
+      materialLine.textContent = `재질: ${node.material ?? "-"}`;
+      meta.appendChild(materialLine);
+  
+      // 수량
+      const qtyLine = document.createElement("div");
+      qtyLine.className = "meta-line";
+      qtyLine.textContent =
+          node.qty !== null && node.qty !== undefined
+              ? `수량: ${node.qty}EA`
+              : "수량: -";
+      meta.appendChild(qtyLine);
+  
+      card.appendChild(meta);
+  
+      // -----------------
+      // 타입 배지
+      // -----------------
+      const badge = document.createElement("div");
+      badge.className = "node-badge" + (node.type === "ASSY" ? " assy" : "");
+      badge.textContent = node.type || "NODE";
+      card.appendChild(badge);
+  
+      // -----------------
+      // 클릭 이벤트
+      // -----------------
+      card.addEventListener("click", async (e) => {
+          e.stopPropagation();
+  
+          currentSelectedId = node.id;
+          updateSelectionHighlight();
+          updateDetailPanel();
+  
+          if (currentTree) {
+              try {
+                  await saveSessionState(currentTree.sub_name, String(node.id));
+              } catch (err) {
+                  console.error("세션 저장 실패:", err);
+              }
+          }
+      });
+  
+      return card;
+    }
 
     function createNodeWrapper(node, depth) {
       const wrapper = document.createElement("div");
@@ -447,8 +470,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   
-  const btnReload = document.getElementById("btn-reload-sub");
-  if (btnReload) btnReload.addEventListener("click", uploadExcelAndLoadTree);
   
   const btnExpandAll = document.getElementById("btn-expand-all");
   if (btnExpandAll) btnExpandAll.addEventListener("click", renderSubTree);
@@ -457,10 +478,8 @@ document.addEventListener("DOMContentLoaded", () => {
   // Init
   // =========================
 
-  loadSubList();
   bindDetailPanelEvents();
   bindClearOnBackgroundClick();
-  bindExcelInputOnce();
 
   async function applyAndPersistSelectedNode() {
       if (!currentTree || currentSelectedId == null) return;
@@ -560,6 +579,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
   
-  restoreSessionState();
+  // restoreSessionState();
 
 });

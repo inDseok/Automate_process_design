@@ -7,7 +7,7 @@ from io import BytesIO
 import re
 
 EXCEL_PATH = r"C:\Users\USER\Desktop\공정설계 자동화\H_Lamp 공정설계 TOOL_korea Version 7.0\H_Lamp_공정설계 TOOL_Korea Version 7.0_230717.xlsm"
-TARGET_SHEET = "STD_LHD_LD"
+TARGET_SHEET = "HL_OPT_LHD_NON_LD"
 
 
 def list_sub_names() -> List[str]:
@@ -27,11 +27,19 @@ def get_cell_value(ws, r, c):
     return ws.cell(row=r, column=c).value
 
 def read_right_value(ws, r, c):
-    col = c + 1
-    max_col = ws.max_column
+    """
+    라벨 셀(c) 기준, 바로 오른쪽부터
+    최대 4칸까지만 값을 탐색한다.
+    그 범위를 벗어나면 무시한다.
+    """
+
+    start_col = c + 1
+    max_scan_col = c + 4  # ← 여기서 명확히 고정
+
     visited_merged = set()
 
-    while col <= max_col:
+    col = start_col
+    while col <= max_scan_col:
         coord = f"{get_column_letter(col)}{r}"
 
         value = ws.cell(row=r, column=col).value
@@ -55,6 +63,7 @@ def read_right_value(ws, r, c):
         col += 1
 
     return None
+
 
 def find_row_with_label(ws, start_r, start_c, label):
     for offset in range(1, 10):
@@ -136,7 +145,7 @@ def parse_block(ws, sheet_name: str, label_row: int, label_col: int):
 def build_tree_from_sheet(ws, sheet_name: str, sub_name: str) -> SubTree:
     boxes = []
 
-    for row in ws.iter_rows(min_row=1, max_col=200, max_row=500):
+    for row in ws.iter_rows(min_row=1, max_row=ws.max_row, max_col=ws.max_column):
         for cell in row:
             v = cell.value
             if v is None:
@@ -194,3 +203,5 @@ def parse_uploaded_excel(binary_data: bytes) -> SubTree:
 
     # sub_name은 리스트와 동일하게 유지
     return build_tree_from_sheet(ws, TARGET_SHEET, sub_name="외주SUB(위트)")
+
+    

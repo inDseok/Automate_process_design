@@ -360,6 +360,7 @@ input[type="number"] {
 
 .node-card-title {
     font-weight: 600;
+    padding-right: 38px;
     margin-bottom: 3px;
     color: #222;
     white-space: nowrap;
@@ -565,4 +566,52 @@ body.move-mode .node-card {
 .node-card.outsource .node-badge {
     background: #f5b7b1;
     color: #7b241c;
+}
+
+/* ===================== */
+/* 사양 선택 모달 (1단계: UI만) */
+/* ===================== */
+
+.modal-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+.modal {
+    width: 480px;
+    max-height: 70vh;
+    background: #fff;
+    border-radius: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    padding: 14px 16px;
+    border-bottom: 1px solid #ddd;
+}
+
+.modal-body {
+    padding: 12px 16px;
+    overflow: auto;
+    flex: 1;
+}
+
+.modal-footer {
+    padding: 12px 16px;
+    border-top: 1px solid #ddd;
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+}
+
+#spec-list label {
+    display: block;
+    font-size: 13px;
+    margin-bottom: 6px;
 }

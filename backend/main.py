@@ -16,9 +16,10 @@ from pydantic import BaseModel
 from pathlib import Path
 
 from backend.models import SubTree, SubNodePatch
-from backend.excel_loader import list_sub_names, load_sub_tree, parse_uploaded_excel
+from backend.excel_loader import list_sub_names, load_sub_tree, parse_uploaded_excel,build_tree_from_sheet
 from fastapi import Cookie
 from typing import Optional
+from openpyxl import load_workbook
 
 
 app = FastAPI()
@@ -208,3 +209,45 @@ def legacy_save_tree_now(sub_name: str, request: Request, response: Response):
         raise HTTPException(status_code=400, detail="엑셀을 먼저 업로드하세요")
     store.save_now(excel_id)
     return {"ok": True}
+
+
+from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi.responses import FileResponse
+from pathlib import Path
+
+from backend.bom_service import create_bom_run, DATA_DIR
+
+@app.post("/api/bom/upload")
+async def upload_bom(file: UploadFile = File(...)):
+    binary = await file.read()
+    try:
+        meta = create_bom_run(binary, file.filename)
+
+        return meta
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@app.get("/api/bom/{bom_id}/tree")
+def get_tree(bom_id: str, spec: str):
+    root = DATA_DIR / bom_id
+    tree_excel = root / "tree.xlsx"
+
+    if not tree_excel.exists():
+        raise HTTPException(status_code=404, detail="BOM 파일 없음")
+
+    wb = load_workbook(tree_excel, data_only=True)
+
+    if spec not in wb.sheetnames:
+        raise HTTPException(status_code=400, detail=f"시트 없음: {spec}")
+
+    ws = wb[spec]
+
+    tree = build_tree_from_sheet(
+        ws,
+        sheet_name=spec,
+        sub_name="외주SUB(위트)"
+    )
+
+    return tree
+

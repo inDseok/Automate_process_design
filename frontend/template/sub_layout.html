@@ -6,7 +6,7 @@
     <div class="toolbar">
 
         <button id="btn-reload-sub" class="btn">불러오기</button>
-        <input id="excel-file" type="file" accept=".xlsx,.xls,.xlsm,.csv" style="display:none">
+        <input id="excel-file" type="file" accept=".xlsb,.xlsx,.xls,.xlsm,.csv" style="display:none">
 
         <span style="font-size:12px;color:#666;">
             BOM 파일 불러오기
@@ -61,6 +61,28 @@
         </div>
     </div>
 </div>
+
+<!-- ===================== -->
+<!-- 사양 선택 모달 (1단계: UI만) -->
+<!-- ===================== -->
+<div id="spec-modal" class="modal-backdrop" style="display:none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h3>사양 선택</h3>
+        </div>
+
+        <div class="modal-body">
+            <div id="spec-list"></div>
+        </div>
+
+        <div class="modal-footer">
+            <button class="btn" id="btn-spec-apply">확인</button>
+            <button class="btn danger" id="btn-spec-cancel">취소</button>
+        </div>
+    </div>
+</div>
+
+
 
 <script src="/static/js/sub.js"></script>
 
